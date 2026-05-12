@@ -2,59 +2,101 @@ import React, { useState, useRef } from 'react';
 import { Send, Paperclip, X, Loader2 } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
 
-const ChatInput = ({ onSendMessage }) => {
+const ChatInput = ({ onSendMessage, setIsAiThinking }) => {
   const [text, setText] = useState('');
   const [previewMedia, setPreviewMedia] = useState(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleSend = async () => {
     if (text.trim() === '' && !previewMedia) return;
-    
+
     let uploadedMediaData = null;
+    let textAiData = null;
 
     if (previewMedia) {
-      setIsUploading(true);
+      // --- Medya yükle ve AI analizi yap ---
+      setIsLoading(true);
+      if (setIsAiThinking) setIsAiThinking(true);
       try {
         const formData = new FormData();
         formData.append('media', previewMedia.file);
+        if (text.trim() !== '') {
+          formData.append('text', text);
+        }
 
-        // Backend'e dosyayı yükle
         const response = await fetch('/api/upload', {
           method: 'POST',
           body: formData,
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
           uploadedMediaData = {
             type: previewMedia.type,
-            url: data.data.url, // Cloudinary URL
-            public_id: data.data.public_id
+            url: data.data.url,
+            id: data.data.id,
+            aiData: data.data.aiData
           };
         } else {
-          alert("Dosya yüklenirken bir hata oluştu: " + data.message);
-          setIsUploading(false);
-          return; // Hata varsa mesajı gönderme
+          alert("İşlem sırasında bir hata oluştu: " + data.message);
+          setIsLoading(false);
+          if (setIsAiThinking) setIsAiThinking(false);
+          return;
         }
       } catch (error) {
         console.error("Yükleme hatası:", error);
-        alert("Bağlantı hatası: Dosya yüklenemedi.");
-        setIsUploading(false);
+        alert("Bağlantı hatası: Sunucuya ulaşılamadı.");
+        setIsLoading(false);
+        if (setIsAiThinking) setIsAiThinking(false);
         return;
       }
-      setIsUploading(false);
+      setIsLoading(false);
+      if (setIsAiThinking) setIsAiThinking(false);
+
+    } else if (text.trim() !== '') {
+      // --- Saf metin → /api/chat ---
+      setIsLoading(true);
+      if (setIsAiThinking) setIsAiThinking(true);
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text.trim() }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          textAiData = data.data.aiData;
+        } else {
+          alert("Hata: " + data.message);
+          setIsLoading(false);
+          if (setIsAiThinking) setIsAiThinking(false);
+          return;
+        }
+      } catch (error) {
+        console.error("Chat hatası:", error);
+        alert("Bağlantı hatası: Sunucuya ulaşılamadı.");
+        setIsLoading(false);
+        if (setIsAiThinking) setIsAiThinking(false);
+        return;
+      }
+      setIsLoading(false);
+      if (setIsAiThinking) setIsAiThinking(false);
     }
-    
+
     onSendMessage({
       text: text,
-      media: uploadedMediaData || (previewMedia ? { type: previewMedia.type, url: previewMedia.url } : null)
+      media: uploadedMediaData || (previewMedia ? { type: previewMedia.type, url: previewMedia.url } : null),
+      aiData: uploadedMediaData?.aiData || textAiData || null
     });
-    
+
     setText('');
     setPreviewMedia(null);
   };
+
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -116,18 +158,18 @@ const ChatInput = ({ onSendMessage }) => {
               ) : (
                 <video src={previewMedia.url} className="h-24 w-auto rounded-lg border border-gray-200 object-cover" />
               )}
-              {!isUploading && (
+              {!isLoading && (
                 <button onClick={() => setPreviewMedia(null)} className="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow-md border border-gray-200 text-gray-500 hover:text-red-500 transition-colors" title="Kaldır">
                   <X size={14} />
                 </button>
               )}
             </div>
-            {isUploading && <div className="text-sm text-green-600 flex items-center gap-2 mt-auto mb-1"><Loader2 size={16} className="animate-spin" /> Yükleniyor...</div>}
+            {isLoading && <div className="text-sm text-green-600 flex items-center gap-2 mt-auto mb-1"><Loader2 size={16} className="animate-spin" /> Yapay Zeka İnceliyor...</div>}
           </div>
         )}
 
         <div className="flex items-end gap-2 p-3">
-          <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="p-2.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-xl transition-colors flex-shrink-0 disabled:opacity-50" title="Dosya Ekle">
+          <button onClick={() => fileInputRef.current?.click()} disabled={isLoading} className="p-2.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-xl transition-colors flex-shrink-0 disabled:opacity-50" title="Dosya Ekle">
             <Paperclip size={20} />
           </button>
           
@@ -138,14 +180,14 @@ const ChatInput = ({ onSendMessage }) => {
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Bitkinize ne olduğunu sorun..."
-            disabled={isUploading}
+            disabled={isLoading}
             className="flex-grow max-h-32 min-h-[44px] bg-transparent border-none focus:ring-0 resize-none py-2.5 px-2 text-gray-700 placeholder-gray-400 disabled:opacity-50"
             rows={1}
             style={{ overflowY: 'auto' }}
           />
 
-          <button onClick={handleSend} disabled={(text.trim() === '' && !previewMedia) || isUploading} className={`p-2.5 rounded-xl transition-all flex-shrink-0 flex items-center justify-center ${(text.trim() !== '' || previewMedia) && !isUploading ? 'bg-green-600 text-white shadow-md hover:bg-green-700 hover:shadow-lg' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}>
-            {isUploading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} className={(text.trim() !== '' || previewMedia) ? "translate-x-0.5 -translate-y-0.5" : ""} />}
+          <button onClick={handleSend} disabled={(text.trim() === '' && !previewMedia) || isLoading} className={`p-2.5 rounded-xl transition-all flex-shrink-0 flex items-center justify-center ${(text.trim() !== '' || previewMedia) && !isLoading ? 'bg-green-600 text-white shadow-md hover:bg-green-700 hover:shadow-lg' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}>
+            {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} className={(text.trim() !== '' || previewMedia) ? "translate-x-0.5 -translate-y-0.5" : ""} />}
           </button>
         </div>
       </div>

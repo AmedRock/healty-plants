@@ -2,12 +2,12 @@ import express from 'express';
 import { uploadMedia } from '../controllers/uploadController.js';
 import upload from '../middlewares/uploadMiddleware.js';
 import { uploadRateLimiter } from '../middlewares/rateLimiter.js';
+import { aiRateLimiter } from '../middlewares/aiRateLimiter.js';
 
 const router = express.Router();
 
-// Sadece bir tane medya (resim veya video) kabul ediyoruz
-// İsim "media" olarak gönderilmeli
-router.post('/', uploadRateLimiter, upload.single('media'), uploadMedia);
+// Hem dosya yükleme hem de AI rate limiter uygulanır
+router.post('/', uploadRateLimiter, aiRateLimiter, upload.single('media'), uploadMedia);
 
 // Multer hata yakalayıcı middleware
 router.use((err, req, res, next) => {

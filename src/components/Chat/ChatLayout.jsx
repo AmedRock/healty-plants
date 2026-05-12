@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import MessageBubble from './MessageBubble';
 import ChatInput from './ChatInput';
-import { Leaf } from 'lucide-react';
+import { Leaf, Sparkles } from 'lucide-react';
 
 const ChatLayout = () => {
   const [messages, setMessages] = useState([
@@ -12,6 +12,7 @@ const ChatLayout = () => {
     }
   ]);
   
+  const [isAiThinking, setIsAiThinking] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -20,41 +21,33 @@ const ChatLayout = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isAiThinking]);
 
   const handleSendMessage = (messageData) => {
-    // Kullanıcı mesajını ekle
+    // Kullanıcı mesajını anında ekle
     const newUserMessage = {
       id: Date.now(),
       sender: 'user',
-      ...messageData
+      text: messageData.text,
+      media: messageData.media
     };
     
     setMessages(prev => [...prev, newUserMessage]);
 
-    // Sahte (Mock) Yapay Zeka Cevabı
-    setTimeout(() => {
-      let aiResponseText = 'Bu çok güzel bir bitki! Gelişimi gayet sağlıklı görünüyor. Sormak istediğiniz belirli bir bakım detayı var mı?';
-      
-      if (messageData.media) {
-        if (messageData.media.type === 'image') {
-          aiResponseText = 'Gönderdiğiniz fotoğrafı inceledim. Yapraklardaki renk canlılığı gayet iyi. Sadece biraz daha fazla güneş ışığına ihtiyacı olabilir.';
-        } else {
-          aiResponseText = 'Videonuzu analiz ettim. Toprağının nem dengesi iyi görünüyor, sulama düzeninize böyle devam edebilirsiniz.';
-        }
-      }
-
+    // Eğer backend'den hazır bir AI cevabı geldiyse (ChatInput'un içinden)
+    // aiData ya üst seviyede ya da media.aiData içinde gelebilir
+    const aiData = messageData.aiData || messageData.media?.aiData;
+    if (aiData) {
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         sender: 'ai',
-        text: aiResponseText
+        aiData: aiData
       }]);
-    }, 1500);
+    }
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-73px)] w-full max-w-5xl mx-auto">
-      {/* Karşılama veya Boş Durum (Eğer mesaj yoksa, şimdilik hep 1 mesaj var) */}
+    <div className="flex flex-col h-[calc(100vh-73px)] w-full max-w-5xl mx-auto relative">
       
       {/* Mesaj Geçmişi Alanı */}
       <div className="flex-grow overflow-y-auto px-4 py-6 scroll-smooth">
@@ -71,12 +64,36 @@ const ChatLayout = () => {
         {messages.map((msg) => (
           <MessageBubble key={msg.id} message={msg} />
         ))}
+        
+        {/* Yapay Zeka Düşünüyor (Skeleton Loader) */}
+        {isAiThinking && (
+          <div className="flex w-full mb-6 justify-start">
+            <div className="max-w-[85%] md:max-w-[75%] rounded-2xl px-5 py-4 shadow-sm bg-white border border-gray-100 rounded-tl-sm animate-pulse">
+               <div className="flex items-center gap-2 mb-4">
+                  <Sparkles className="text-gray-300" size={18} />
+                  <div className="h-4 bg-gray-200 rounded w-32"></div>
+               </div>
+               <div className="space-y-3">
+                  <div className="h-3 bg-gray-200 rounded w-full"></div>
+                  <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+                  <div className="h-3 bg-gray-200 rounded w-4/6"></div>
+               </div>
+               <div className="flex gap-2 mt-4">
+                  <div className="h-6 w-16 bg-gray-200 rounded-full"></div>
+                  <div className="h-6 w-20 bg-gray-200 rounded-full"></div>
+               </div>
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
       {/* Mesaj Giriş Alanı */}
       <div className="w-full bg-gray-50 pt-2">
-        <ChatInput onSendMessage={handleSendMessage} />
+        <ChatInput 
+          onSendMessage={handleSendMessage} 
+          setIsAiThinking={setIsAiThinking} 
+        />
       </div>
     </div>
   );

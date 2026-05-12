@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import uploadRoutes from './routes/uploadRoutes.js';
+import chatRoutes from './routes/chatRoutes.js';
 
 const app = express();
 
@@ -25,5 +26,8 @@ app.get('/api/test', (req, res) => {
 
 // Yükleme (Upload) Rotaları
 app.use('/api/upload', uploadRoutes);
+
+// Metin Chat Rotaları
+app.use('/api/chat', chatRoutes);
 
 export default app;
