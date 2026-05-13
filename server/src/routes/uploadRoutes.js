@@ -3,11 +3,14 @@ import { uploadMedia } from '../controllers/uploadController.js';
 import upload from '../middlewares/uploadMiddleware.js';
 import { uploadRateLimiter } from '../middlewares/rateLimiter.js';
 import { aiRateLimiter } from '../middlewares/aiRateLimiter.js';
+import { protect } from '../middlewares/authMiddleware.js';
+import { checkAiLimit } from '../middlewares/aiLimitMiddleware.js';
 
 const router = express.Router();
 
-// Hem dosya yükleme hem de AI rate limiter uygulanır
-router.post('/', uploadRateLimiter, aiRateLimiter, upload.single('media'), uploadMedia);
+// Hem dosya yükleme hem de AI rate limiter uygulanır (auth + limit koruması)
+router.post('/', protect, checkAiLimit, uploadRateLimiter, aiRateLimiter, upload.single('media'), uploadMedia);
+
 
 // Multer hata yakalayıcı middleware
 router.use((err, req, res, next) => {
