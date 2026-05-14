@@ -31,9 +31,9 @@ const Sidebar = ({
   // Filtrelenmiş sohbetler
   const filtered = searchLower
     ? conversations.filter(c =>
-        safeToLower(c.title).includes(searchLower) ||
-        safeToLower(c.preview).includes(searchLower)
-      )
+      safeToLower(c.title).includes(searchLower) ||
+      safeToLower(c.preview).includes(searchLower)
+    )
     : conversations;
 
   // ---- Sidebar içeriği (desktop + mobil paylaşımlı) ----
@@ -61,9 +61,8 @@ const Sidebar = ({
         >
           <Search
             size={13}
-            className={`absolute left-2.5 top-1/2 -translate-y-1/2 transition-colors duration-200 ${
-              searchFocused ? 'text-green-500' : 'text-gray-400'
-            }`}
+            className={`absolute left-2.5 top-1/2 -translate-y-1/2 transition-colors duration-200 ${searchFocused ? 'text-green-500' : 'text-gray-400'
+              }`}
           />
           <input
             ref={searchRef}

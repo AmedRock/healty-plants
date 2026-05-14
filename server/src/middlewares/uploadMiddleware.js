@@ -6,8 +6,8 @@ const storage = multer.memoryStorage();
 // Sadece izin verilen dosya tiplerini geçir
 const fileFilter = (req, file, cb) => {
   const allowedMimeTypes = [
-    'image/jpeg', 
-    'image/png', 
+    'image/jpeg',
+    'image/png',
     'image/webp',
     'image/heic', // HEIC desteği
     'image/gif',  // GIF desteği

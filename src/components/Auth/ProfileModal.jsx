@@ -12,8 +12,8 @@ const UsageBar = ({ used, limit }) => {
   const pct = Math.min(Math.round((used / limit) * 100), 100);
   const color =
     pct >= 90 ? 'bg-red-500' :
-    pct >= 70 ? 'bg-amber-500' :
-    'bg-green-500';
+      pct >= 70 ? 'bg-amber-500' :
+        'bg-green-500';
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -62,7 +62,7 @@ const ProfileModal = ({ onClose }) => {
   useEffect(() => {
     apiGet('/conversations', handleAuthError)
       .then(({ data }) => { if (data.success) setConversationCount(data.total); })
-      .catch(() => {});
+      .catch(() => { });
   }, [handleAuthError]);
 
   // Dışarıya tıklayınca kapat

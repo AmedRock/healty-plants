@@ -122,7 +122,7 @@ const ChatInput = ({ onSendMessage, setIsAiThinking, activeConversationId, onCon
     } else if (file.type.startsWith('image/') && !file.type.includes('gif')) {
       try {
         finalFile = await imageCompression(file, { maxSizeMB: 5, maxWidthOrHeight: 1920, useWebWorker: true });
-      } catch {}
+      } catch { }
     }
 
     setPreviewMedia({ type: isVideo ? 'video' : 'image', url: URL.createObjectURL(finalFile), file: finalFile });

@@ -12,8 +12,8 @@ const Topbar = () => {
   const pct = Math.min(Math.round((used / limit) * 100), 100);
   const limitColor =
     pct >= 90 ? 'text-red-500' :
-    pct >= 70 ? 'text-amber-500' :
-    'text-green-600';
+      pct >= 70 ? 'text-amber-500' :
+        'text-green-600';
 
   // İlk harflerden avatar
   const initials = user

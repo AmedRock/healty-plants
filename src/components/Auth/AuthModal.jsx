@@ -399,21 +399,19 @@ const AuthModal = () => {
           <div className="flex border-b border-gray-100">
             <button
               onClick={() => switchMode('login')}
-              className={`flex-1 py-3 text-sm font-semibold transition-colors ${
-                mode === 'login'
+              className={`flex-1 py-3 text-sm font-semibold transition-colors ${mode === 'login'
                   ? 'text-green-700 border-b-2 border-green-600 bg-green-50'
                   : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
+                }`}
             >
               Giriş Yap
             </button>
             <button
               onClick={() => switchMode('register')}
-              className={`flex-1 py-3 text-sm font-semibold transition-colors ${
-                mode === 'register'
+              className={`flex-1 py-3 text-sm font-semibold transition-colors ${mode === 'register'
                   ? 'text-green-700 border-b-2 border-green-600 bg-green-50'
                   : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
+                }`}
             >
               Kayıt Ol
             </button>
@@ -421,9 +419,8 @@ const AuthModal = () => {
 
           {/* Form İçeriği */}
           <div
-            className={`px-8 py-6 transition-all duration-200 ${
-              isAnimating ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'
-            }`}
+            className={`px-8 py-6 transition-all duration-200 ${isAnimating ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'
+              }`}
             style={{ transform: isAnimating ? 'translateY(8px)' : 'translateY(0)' }}
           >
             {mode === 'login' ? (

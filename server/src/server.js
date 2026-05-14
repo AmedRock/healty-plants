@@ -12,7 +12,7 @@ const startServer = async () => {
   try {
     // Önce veritabanı bağlantısını kur
     await connectDB();
-    
+
     // Bağlantı başarılıysa sunucuyu dinlemeye başla
     app.listen(PORT, () => {
       console.log(`Sunucu ${PORT} portunda çalışıyor...`);

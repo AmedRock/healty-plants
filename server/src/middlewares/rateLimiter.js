@@ -7,6 +7,6 @@ export const uploadRateLimiter = rateLimit({
     success: false,
     message: 'Çok fazla dosya yükleme isteği gönderdiniz. Lütfen 15 dakika sonra tekrar deneyin.'
   },
-  standardHeaders: true, 
-  legacyHeaders: false, 
+  standardHeaders: true,
+  legacyHeaders: false,
 });

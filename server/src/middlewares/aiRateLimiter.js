@@ -7,6 +7,6 @@ export const aiRateLimiter = rateLimit({
     success: false,
     message: 'Kullanım limitiniz doldu. Sistemi korumak amacıyla saatlik analiz kotanızı doldurdunuz. Lütfen daha sonra tekrar deneyin.'
   },
-  standardHeaders: true, 
-  legacyHeaders: false, 
+  standardHeaders: true,
+  legacyHeaders: false,
 });
