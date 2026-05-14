@@ -18,7 +18,7 @@ app.use(helmet());
 // credentials -> Cookie ve Authorization başlıklarının iletilmesine izin verir.
 // exposedHeaders -> Client'ın response header'larındaki AI limit sayaçlarını okuyabilmesini sağlar.
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: ['http://localhost:5173', 'https://healty-plants.vercel.app'],
   credentials: true,
   exposedHeaders: ['X-AI-Usage-Count', 'X-AI-Usage-Limit']
 }));
