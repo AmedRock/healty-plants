@@ -4,6 +4,10 @@ import imageCompression from 'browser-image-compression';
 import { useAuth } from '../../context/AuthContext';
 import { apiPost, apiPostFormData } from '../../utils/api';
 
+// ---------------------------------------------------------------
+// [MİMARİ] Stateful Komponent & Asenkron Medya Yönetimi
+// ChatInput, kullanıcının metin girişini ve medya (resim/video) seçimini yöneten "Controlled Component"tir.
+// ---------------------------------------------------------------
 const ChatInput = ({ onSendMessage, setIsAiThinking, activeConversationId, onConversationCreated }) => {
   const { handleAuthError, updateUserUsage } = useAuth();
   const [text, setText] = useState('');
@@ -25,6 +29,8 @@ const ChatInput = ({ onSendMessage, setIsAiThinking, activeConversationId, onCon
     let textAiData = null;
     let returnedConvId = null;
 
+    // [MİMARİ] API Entegrasyonu (Yönlendirme Deseni - Routing Pattern)
+    // Eğer medya (resim/video) varsa 'multipart/form-data' olarak '/upload' rotasına, sadece metin varsa 'application/json' olarak '/chat' rotasına dinamik yönlendirme yapılır.
     if (previewMedia) {
       setIsLoading(true);
       if (setIsAiThinking) setIsAiThinking(true);
@@ -62,6 +68,8 @@ const ChatInput = ({ onSendMessage, setIsAiThinking, activeConversationId, onCon
 
     } else if (text.trim() !== '') {
       setIsLoading(true);
+      // [MİMARİ] Optimistic UI Update (İyimser Arayüz Öncesi State)
+      // İstek gönderilmeden önce "AI Düşünüyor" animasyonu tetiklenerek kullanıcıya anında görsel geri bildirim (Fast Feedback) sağlanır.
       if (setIsAiThinking) setIsAiThinking(true);
       try {
         const { data } = await apiPost(
@@ -113,6 +121,9 @@ const ChatInput = ({ onSendMessage, setIsAiThinking, activeConversationId, onCon
     const file = e.target.files[0];
     if (!file) return;
     const isVideo = file.type.startsWith('video/');
+    // [MİMARİ] Client-Side Compression (İstemci Tarafı Sıkıştırma)
+    // Frontend'den backend'e resim yollanmadan önce `browser-image-compression` kütüphanesi ile tarayıcı RAM'inde sıkıştırma yapılır. 
+    // Bu işlem sunucu maliyetini (Storage/Bandwidth) ve ağ gecikmesini (Latency) dramatik şekilde düşürür.
     let finalFile = file;
 
     if (isVideo && file.size > 20 * 1024 * 1024) {

@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { User, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import ProfileModal from './Auth/ProfileModal';
-
+// [MİMARİ] Navbar/Topbar Bileşeni
+// AuthContext üzerinden okunan `user` state'ini dinler. Global state değiştiği anda (örneğin kullanıcı fotoğraf yüklediğinde), sayacın (used/limit) anında render edilmesini sağlar.
 const Topbar = () => {
   const { user } = useAuth();
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -15,7 +16,8 @@ const Topbar = () => {
       pct >= 70 ? 'text-amber-500' :
         'text-green-600';
 
-  // İlk harflerden avatar
+  // [BİLEŞEN] Dinamik Avatar Üreticisi
+  // Resim URL'si olmadığı için kullanıcının firstName ve lastName'inin ilk harflerini okuyarak (Optional Chaining kullanarak) harf kombinasyonlu (örn: AH) avatar üretir.
   const initials = user
     ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()
     : '?';
@@ -41,7 +43,7 @@ const Topbar = () => {
 
         {/* Sağ — AI Kullanım Sayacı + Nav */}
         <div className="flex items-center gap-5">
-          {/* AI Kullanım Mini Sayacı */}
+        {/* [BİLEŞEN] AI Kullanım Mini Sayacı */}
           {user && (
             <div
               className="flex items-center gap-1.5 cursor-pointer group"
@@ -63,7 +65,8 @@ const Topbar = () => {
         </div>
       </div>
 
-      {/* Profil Modalı */}
+      {/* [MİMARİ] Portal / Modal Render
+      React tree içinde normal DOM akışını bozmamak adına ProfileModal, şarta bağlı (conditional) olarak render edilir. */}
       {showProfileModal && (
         <ProfileModal onClose={() => setShowProfileModal(false)} />
       )}

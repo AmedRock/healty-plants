@@ -8,11 +8,13 @@ import { checkAiLimit } from '../middlewares/aiLimitMiddleware.js';
 
 const router = express.Router();
 
-// Hem dosya yükleme hem de AI rate limiter uygulanır (auth + limit koruması)
+// [MİMARİ] Upload Middleware Pipeline
+// Sırasıyla: Auth kontrolü -> Günlük AI Limit Kontrolü -> Genel API spam kontrolü -> AI spam kontrolü -> Multer ile RAM'e dosya alımı -> Cloudinary/Gemini Controller'ı.
 router.post('/', protect, checkAiLimit, uploadRateLimiter, aiRateLimiter, upload.single('media'), uploadMedia);
 
 
-// Multer hata yakalayıcı middleware
+// [MİMARİ] Global Error Handler (Hata Yakalayıcı) for Multer
+// Express mimarisinde 4 parametreli fonksiyonlar hata yakalayıcı (error middleware) olarak davranır. Sadece dosya limiti/Multer hatalarını sarmalamak (catch) için kullanılır.
 router.use((err, req, res, next) => {
   if (err.name === 'MulterError') {
     if (err.code === 'LIMIT_FILE_SIZE') {

@@ -6,7 +6,8 @@ import { Leaf, Sparkles, Menu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { apiGet, apiDelete } from '../../utils/api';
 
-// MongoDB mesajını bileşen formatına dönüştür
+// [MİMARİ] DTO (Data Transfer Object) Adaptörü / Normalization
+// Backend'den gelen karmaşık (Mongoose Document) veriyi, Frontend'deki UI bileşenlerinin (MessageBubble) hatasız okuyabilmesi için standart ve basit bir JSON objesine (Unified format) dönüştürür.
 const normalizeMessage = (msg, idx) => ({
   id: msg._id || `${idx}-${msg.role}`,
   sender: msg.role,
@@ -22,6 +23,10 @@ const WELCOME_MESSAGE = {
   text: 'Merhaba! Ben BitkiAI asistanınız. Bitkilerinizle ilgili her türlü soruyu sorabilir, fotoğraf veya video göndererek hastalık tespiti veya bakım tavsiyesi isteyebilirsiniz. Size nasıl yardımcı olabilirim?',
 };
 
+// ---------------------------------------------------------------
+// [MİMARİ] Container Component Pattern (Akıllı Kapsayıcı Bileşen Deseni)
+// ChatLayout uygulamadaki tüm ana sohbet State'lerini (mesajlar, seçili sohbet vs.) kendi üzerinde tutar. Alt bileşenlere (Sidebar, ChatInput) sadece gereken fonksiyonları (Prop Drilling ile) geçer.
+// ---------------------------------------------------------------
 const ChatLayout = () => {
   const { handleAuthError } = useAuth();
 
@@ -43,7 +48,8 @@ const ChatLayout = () => {
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   useEffect(() => { scrollToBottom(); }, [messages, isAiThinking]);
 
-  // ── Sohbet listesini yükle ──────────────────────────────────
+  // ── [MİMARİ] useCallback ile Asenkron İstek Sabitleme ──────────────────────────────────
+  // fetchConversations fonksiyonunun bellek referansı sabitlenerek, useEffect'in bu fonksiyonu sürekli tetiklemesi (Sonsuz Döngü / Memory Leak) engellenmiştir.
   const fetchConversations = useCallback(async () => {
     try {
       const { data } = await apiGet('/conversations', handleAuthError);
@@ -90,9 +96,9 @@ const ChatLayout = () => {
     }
   };
 
-  // ── Mesaj gönderimi (ChatInput'tan gelen) ──────────────────
+  // ── [MİMARİ] Optimistic UI Update (İyimser Güncelleme) ──────────────────
   const handleSendMessage = (messageData) => {
-    // Kullanıcı mesajını hemen göster
+    // API'nin cevabını (Promise resolve) beklemeden, kullanıcının mesajı anında (0ms gecikme) DOM'a (Ekrana) basılır. (Perceived Performance - Algılanan Performans optimizasyonu).
     const userMsg = {
       id: Date.now(),
       sender: 'user',

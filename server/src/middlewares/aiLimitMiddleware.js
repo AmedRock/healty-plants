@@ -1,9 +1,11 @@
-// Kullanıcının günlük AI kullanım limitini kontrol eder ve sayacı artırır
+// [MİMARİ] Business Logic Middleware: AI Limit Denetleyicisi
+// Bu middleware, veritabanı ile konuşup kullanıcının günlük kota sınırını aşmasını engeller. Rate limiter'dan farkı: Saatlik/IP bazlı değil, Veritabanı ve Kullanıcı (User) bazlıdır.
 export const checkAiLimit = async (req, res, next) => {
   try {
     const user = req.user;
 
-    // Önce günlük reset kontrolü
+    // [MİMARİ] Lazy Evaluation ile Reset
+    // Ayrı bir Cron Job kullanmak yerine, istek geldiğinde tarih kontrolü yapar. Eğer geçmişse (dün kullanıldıysa) hakları 0'lar.
     await user.checkAndResetUsage();
 
     if (user.aiUsageCount >= user.aiUsageLimit) {
@@ -16,11 +18,13 @@ export const checkAiLimit = async (req, res, next) => {
       });
     }
 
-    // Sayacı artır ve kaydet
+    // [MİMARİ] Optimistic Locking/Save
+    // validateBeforeSave: false yapılarak, diğer şema gereksinimlerini kontrol etmeden hızlıca sadece sayacı (count) günceller.
     user.aiUsageCount += 1;
     await user.save({ validateBeforeSave: false });
 
-    // Frontend'in sayacı güncelleyebilmesi için header'a ekle
+    // [MİMARİ] Custom HTTP Headers (Header Injection)
+    // İstemcinin (frontend) profil ekranında kullanıcının kalan hakkını gösterebilmesi için bu bilgiyi HTTP yanıt başlıklarına (headers) gömüyoruz.
     res.setHeader('X-AI-Usage-Count', user.aiUsageCount);
     res.setHeader('X-AI-Usage-Limit', user.aiUsageLimit);
 

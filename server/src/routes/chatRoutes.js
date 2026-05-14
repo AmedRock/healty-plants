@@ -6,7 +6,11 @@ import { checkAiLimit } from '../middlewares/aiLimitMiddleware.js';
 
 const router = express.Router();
 
-// Saf metin mesajları için AI chat endpoint'i (auth + limit koruması)
+// [MİMARİ] Route Middlewares Pipeline (Zincirleme Middleware Mimarisi)
+// 1. protect -> Kullanıcı giriş yapmış mı?
+// 2. checkAiLimit -> Veritabanındaki günlük hakkı dolmuş mu?
+// 3. aiRateLimiter -> Aynı IP'den spam atıyor mu (saatlik)?
+// 4. chatWithText -> Her şey uygunsa Controller tetiklenir.
 router.post('/', protect, checkAiLimit, aiRateLimiter, chatWithText);
 
 export default router;

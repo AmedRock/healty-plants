@@ -21,7 +21,8 @@ export const uploadMedia = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Resim boyutu 5 MB sınırını aşıyor.' });
     }
 
-    // 1. Cloudinary Upload
+    // [MİMARİ] Adım 1: RAM'den Cloudinary'e Doğrudan Aktarım (Streaming)
+    // Dosya asla sunucu diskine yazılmaz (Zero Disk I/O). `req.file.buffer` (RAM'deki dosya) streamifier yardımıyla Cloudinary upload servisine aktarılır.
     const cloudinaryUpload = new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         { folder: 'healty-plants-uploads', resource_type: isVideo ? 'video' : 'image' },
@@ -31,10 +32,12 @@ export const uploadMedia = async (req, res) => {
     });
     const cloudResult = await cloudinaryUpload;
 
-    // 2. Gemini AI Analizi
+    // [MİMARİ] Adım 2: Gemini AI Multimedya Analizi
+    // Yüklenen dosyanın raw buffer'ı (ve varsa prompt/text) Gemini API'sine gönderilir.
     const aiResult = await analyzeMediaWithGemini(req.file.buffer, req.file.mimetype, text);
 
-    // 3. Analysis kaydı (eski model - geriye dönük uyumluluk)
+    // [MİMARİ] Adım 3: Geriye Dönük Uyumluluk (Backward Compatibility)
+    // Sistemin önceki versiyonunda kullanılan `AnalysisModel` yapısını bozmamak adına kayıt buraya da atılır.
     const newAnalysis = new Analysis({
       userId,
       mediaUrl: cloudResult.secure_url,

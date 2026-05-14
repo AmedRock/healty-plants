@@ -1,6 +1,8 @@
 import Conversation from '../models/ConversationModel.js';
 
-// GET /api/conversations — kullanıcının sohbet listesi (önizleme ile)
+// [MİMARİ] GET /api/conversations (Sohbet Ön İzleme Listesi)
+// Frontend'deki Sidebar bileşenini besleyen API. 
+// Performans Optimizasyonu: .select() ile sadece başlık ve mesajlar çekilir, `.lean()` ile Mongoose dokümanları saf JS nesnelerine (POJO) dönüştürülür (hız ve bellek tasarrufu sağlar).
 export const getConversations = async (req, res) => {
   try {
     const conversations = await Conversation.find({ userId: req.user._id })
@@ -29,7 +31,8 @@ export const getConversations = async (req, res) => {
   }
 };
 
-// GET /api/conversations/:id — tekil sohbet (tüm mesajlarıyla)
+// [MİMARİ] GET /api/conversations/:id (Sohbet Detayları)
+// Belirli bir sohbetin tüm mesajlarını ve meta verilerini getirir.
 export const getConversationById = async (req, res) => {
   try {
     const conversation = await Conversation.findOne({

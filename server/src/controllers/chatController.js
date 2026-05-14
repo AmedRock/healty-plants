@@ -20,15 +20,19 @@ export const chatWithText = async (req, res) => {
         return res.status(404).json({ success: false, message: 'Sohbet bulunamadı.' });
       }
     } else {
-      // Başlık: ilk mesajın ilk 50 karakteri
+      // [MİMARİ] Conversation Persistence (Sohbet Kalıcılığı)
+      // Eğer frontend bir `conversationId` gönderdiyse mevcut sohbet dizisine ekleme yapacağız.
+      // Eğer yoksa (yeni sohbet başlatıldıysa) yeni bir Conversation dokümanı oluşturulacak.
       const title = message.trim().substring(0, 50) + (message.trim().length > 50 ? '...' : '');
       conversation = new Conversation({ userId, title });
     }
 
-    // Kullanıcı mesajını ekle
+    // [MİMARİ] Mesajların Alt Doküman Olarak Eklenmesi (Subdocument Push)
+    // Kullanıcının attığı text mesajını 'user' rolüyle diziye ekliyoruz.
     conversation.messages.push({ role: 'user', text: message.trim() });
 
-    // AI cevabını ekle
+    // [MİMARİ] AI Yanıtı Entegrasyonu
+    // Servisten dönen yapılandırılmış AI verisini, model şemasına uygun şekilde ekliyoruz.
     conversation.messages.push({ role: 'ai', aiData: aiResult });
 
     conversation.updatedAt = new Date();

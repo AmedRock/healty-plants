@@ -11,10 +11,12 @@ dotenv.config();
 const genAI = new GoogleGenerativeAI(process.env.AI_API_KEY);
 const fileManager = new GoogleAIFileManager(process.env.AI_API_KEY);
 
-// Kullanılacak model
+// [MİMARİ] Model Seçimi
+// Flash modeli, hız (latency) ve maliyet açısından Pro modele göre avantajlıdır. Anlık sohbet asistanı için tercih edilmiştir.
 const MODEL_NAME = "gemini-flash-latest";
 
-// Medya (görsel/video) analizleri için sistem talimatı
+// [MİMARİ] System Instructions (Sistem Talimatı - Prompt Engineering)
+// Yapay zekanın "persona"sını (Botanik Asistanı) belirleriz. Güvenlik ve bağlam dışına çıkmasını engellemek için sınırları katı çizilir.
 const MEDIA_SYSTEM_INSTRUCTION = `Sen uzman bir botanikçi ve bitki sağlığı asistanısın. 
 Gönderilen medyayı SADECE bitki türü, sağlığı, hastalıkları ve bakımı bağlamında değerlendir. Eğer fotoğrafta veya videoda "hiçbir şekilde" bitki yoksa analizi reddet. Ancak bitkinin yanında saksı, arka plan, bitkiyi tutan bir el veya insan gibi unsurlar varsa bunları görmezden gel ve SADECE bitkiye odaklan. Kullanıcı sana yazılı bir soru veya not gönderdiyse, analizini yaparken o soruyu/notu da dikkate al.
 Mutlaka aşağıda belirtilen JSON şemasında ve saf JSON formatında (markdown blokları olmadan) yanıt vermelisin.
@@ -27,7 +29,8 @@ JSON formatı:
   "etiketler": ["etiket1", "etiket2", "hastalik_varsa_adi", "bitki_turu"]
 }`;
 
-// Saf metin sorguları için sistem talimatı
+// [MİMARİ] Salt Metin Promtu
+// Medya haricindeki sohbetlerde farklı bir yapı kullanılarak modelin halüsinasyon (olmayan medyayı yorumlama) görmesi engellenir.
 const TEXT_SYSTEM_INSTRUCTION = `Sen uzman bir botanikçi ve bitki sağlığı asistanısın.
 Kullanıcının yazılı sorusunu yalnızca bitki türleri, bitki sağlığı, hastalıklar, bakım, sulama, gübreleme ve botanik konularında değerlendir.
 Eğer soru bitkiyle tamamen ilgisizse, kibarca reddet ve konuyu bitkiye çek.
@@ -42,7 +45,8 @@ JSON formatı:
 }`;
 
 // -------------------------------------------------------------------
-// Medya (resim / video) analizi
+// [MİMARİ BİLGİ] - Multimedya Analiz İşlemcisi (Media Analysis Engine)
+// Bu fonksiyon hem BASE64 string üzerinden resim kabul edebilir hem de File API (GoogleAIFileManager) üzerinden büyük boyutlu videoları parçalı yükleyebilir.
 // -------------------------------------------------------------------
 export const analyzeMediaWithGemini = async (buffer, mimeType, userPrompt = "") => {
   const isVideo = mimeType.startsWith('video/');
@@ -59,7 +63,8 @@ export const analyzeMediaWithGemini = async (buffer, mimeType, userPrompt = "") 
     let result;
 
     if (!isVideo) {
-      // GÖRSEL (Resim) - BASE64
+      // [MİMARİ] Base64 Image Processing
+      // Resim boyutları (5MB altı) makul olduğu için diske yazmadan doğrudan RAM'deki buffer'ı BASE64'e çevirip payload olarak gönderiyoruz (Zero Disk I/O).
       const base64Data = buffer.toString("base64");
       const imagePart = {
         inlineData: {
@@ -75,7 +80,9 @@ export const analyzeMediaWithGemini = async (buffer, mimeType, userPrompt = "") 
       result = await model.generateContent([promptText, imagePart]);
 
     } else {
-      // VİDEO - GoogleAIFileManager
+      // [MİMARİ] Video Chunking & File API
+      // Videolar (20MB'a kadar) Base64 yapıldığında RAM'i aşırı tüketip payload limitini aşar. Bu yüzden önce geçici olarak diske (os.tmpdir) yazılır,
+      // ardından Google'ın File Manager API'sine stream edilerek yüklenir. İşlem (PROCESSING) bitene kadar polling (bekleme) yapılır.
       const tempDir = os.tmpdir();
       const tempFilePath = path.join(tempDir, `upload_${uuidv4()}.${mimeType.split('/')[1] || 'mp4'}`);
 
@@ -137,7 +144,8 @@ export const analyzeMediaWithGemini = async (buffer, mimeType, userPrompt = "") 
 };
 
 // -------------------------------------------------------------------
-// Saf metin analizi
+// [MİMARİ BİLGİ] - Salt Metin Analiz İşlemcisi
+// Multimedya verisi taşımadığı için daha hızlı çalışır. Sadece System Prompt ve User Prompt birleştirilerek JSON schema'ya uyması zorunlu kılınır.
 // -------------------------------------------------------------------
 export const analyzeTextWithGemini = async (userText) => {
   try {

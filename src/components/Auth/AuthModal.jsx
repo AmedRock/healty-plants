@@ -4,7 +4,8 @@ import { useAuth } from '../../context/AuthContext';
 import { apiPost } from '../../utils/api';
 
 // ---------------------------------------------------------------
-// Küçük yardımcı: input alanı
+// [MİMARİ] Component Reusability (Yeniden Kullanılabilirlik) & DRY Prensibi
+// InputField: Hem Login hem de Register formlarında kod tekrarını engellemek (Don't Repeat Yourself) için oluşturulmuş ortak (shared) bir Child Component'tir. Parçalanabilir (Atomic Design) yapıdadır.
 // ---------------------------------------------------------------
 const InputField = ({ id, label, type = 'text', value, onChange, placeholder, icon: Icon, error, autoComplete }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -53,7 +54,8 @@ const InputField = ({ id, label, type = 'text', value, onChange, placeholder, ic
 };
 
 // ---------------------------------------------------------------
-// Login Formu
+// [MİMARİ] Login Form Bileşeni (Controlled Component)
+// React'in "Kontrollü Bileşen" yapısı kullanılarak input değerleri state'e (email, password) bağlanmıştır.
 // ---------------------------------------------------------------
 const LoginForm = ({ onSwitch }) => {
   const { login } = useAuth();
@@ -64,6 +66,8 @@ const LoginForm = ({ onSwitch }) => {
   const [serverError, setServerError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // [MİMARİ] Frontend Validasyon (İstemci Tarafı Doğrulama)
+  // Backend'e gereksiz HTTP istekleri gitmesini engelleyerek hem Network yükünü azaltır hem de kullanıcıya saniyesinde hata gösterir (Fast Feedback loop).
   const validate = () => {
     const e = {};
     if (!email.trim()) e.email = 'Email alanı zorunludur.';
@@ -72,6 +76,7 @@ const LoginForm = ({ onSwitch }) => {
     return e;
   };
 
+  // [MİMARİ] Asenkron İstek Yönetimi ve Hata Yakalama
   const handleSubmit = async (ev) => {
     ev.preventDefault();
     const e = validate();
@@ -178,7 +183,7 @@ const LoginForm = ({ onSwitch }) => {
 };
 
 // ---------------------------------------------------------------
-// Register Formu
+// [MİMARİ] Register Form Bileşeni (Kayıt Olma)
 // ---------------------------------------------------------------
 const RegisterForm = ({ onSwitch }) => {
   const { login } = useAuth();
@@ -359,7 +364,9 @@ const RegisterForm = ({ onSwitch }) => {
 };
 
 // ---------------------------------------------------------------
-// Ana Auth Modal
+// [MİMARİ] Ana Auth Modal Parent Bileşeni
+// Login ve Register component'lerini bir araya getirip aralarında sekme (tab) geçişini yönetir. 
+// Koşullu render yerine animasyonlu geçiş (isAnimating state) tercih edilerek akıcı bir UI sağlanmıştır.
 // ---------------------------------------------------------------
 const AuthModal = () => {
   const [mode, setMode] = useState('login'); // 'login' | 'register'
@@ -400,8 +407,8 @@ const AuthModal = () => {
             <button
               onClick={() => switchMode('login')}
               className={`flex-1 py-3 text-sm font-semibold transition-colors ${mode === 'login'
-                  ? 'text-green-700 border-b-2 border-green-600 bg-green-50'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                ? 'text-green-700 border-b-2 border-green-600 bg-green-50'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                 }`}
             >
               Giriş Yap
@@ -409,8 +416,8 @@ const AuthModal = () => {
             <button
               onClick={() => switchMode('register')}
               className={`flex-1 py-3 text-sm font-semibold transition-colors ${mode === 'register'
-                  ? 'text-green-700 border-b-2 border-green-600 bg-green-50'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                ? 'text-green-700 border-b-2 border-green-600 bg-green-50'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                 }`}
             >
               Kayıt Ol

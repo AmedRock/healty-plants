@@ -5,12 +5,15 @@ import Topbar from './components/Topbar';
 import ChatLayout from './components/Chat/ChatLayout';
 
 // ---------------------------------------------------------------
-// İç bileşen: Auth durumuna göre içerik gösterir
+// [MİMARİ] Component Lifecycle ve Authentication State (Durum) Kontrolü
+// AppContent, useAuth hook'u aracılığıyla uygulamanın merkezi global durumunu dinler. 
+// Token varsa (isAuthenticated === true), yönlendirmeyi ChatLayout'a yapar. Aksi takdirde AuthModal render edilir (Protected Route mantığı).
 // ---------------------------------------------------------------
 const AppContent = () => {
   const { isAuthenticated, isLoading } = useAuth();
 
-  // localStorage kontrolü yapılırken kısa bir loading ekranı
+  // [BİLEŞEN] Hydration Loading State
+  // Sayfa ilk yenilendiğinde (F5) localStorage'dan token'ın okunup state'e basılması (hydration) milisaniyeler sürer. Bu süreçte ekranda flash efekti olmasın diye loading spinner gösterilir.
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -22,12 +25,14 @@ const AppContent = () => {
     );
   }
 
-  // Kullanıcı giriş yapmamışsa → Auth Modal (arka planda chat görünmez)
+  // [MİMARİ] Koşullu Render (Conditional Rendering)
+  // Kullanıcı giriş yapmamışsa, DOM ağacında hiçbir sohbet verisi veya layout barındırmadan saf AuthModal'ı döner.
   if (!isAuthenticated) {
     return <AuthModal />;
   }
 
-  // Giriş yapılmışsa → Normal uygulama
+  // [BİLEŞEN] Ana Uygulama Çatısı (Main Layout)
+  // Giriş yapılmışsa Topbar ve ChatLayout'u grid/flex mimarisi ile ekrana yerleştirir. CSS flex-grow sayesinde mesaj alanı kalan boşluğu otomatik doldurur.
   return (
     <div className="h-screen bg-gray-50 flex flex-col font-sans overflow-hidden">
       <Topbar />
@@ -39,7 +44,9 @@ const AppContent = () => {
 };
 
 // ---------------------------------------------------------------
-// Kök bileşen: AuthProvider ile sarıyor
+// [MİMARİ] Kök Bileşen (Root Component) ve Context Provider Pattern
+// React'ın render ağacının (DOM tree) en tepesinde AuthProvider konumlandırılır.
+// Bu sayede uygulamadaki tüm alt bileşenler (AppContent ve içindekiler) props geçmeye gerek kalmadan (Prop Drilling engellenerek) global auth durumuna erişebilir.
 // ---------------------------------------------------------------
 function App() {
   return (

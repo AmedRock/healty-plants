@@ -1,7 +1,9 @@
-// Tüm backend API istekleri için merkezi yardımcı modül
-// Token'ı otomatik ekler ve 401 hatalarını yakalar
+// [MİMARİ BİLGİ] Merkezi HTTP İstemci (Fetch Wrapper) Katmanı
+// Uygulamadaki tüm API çağrıları tek bir noktadan geçer. Bu "Facade" deseni (pattern) sayesinde:
+// 1. Request Interceptor (İstek Yakalayıcı) mantığı kurularak JWT Token'ı tüm isteklere otomatik enjekte edilir.
+// 2. Response Interceptor (Yanıt Yakalayıcı) mantığı kurularak 401 durum kodları (Oturum Düşmesi) merkezi olarak yönetilip AuthContext tetiklenir.
 
-const API_BASE = '/api'; // Vite proxy üzerinden
+const API_BASE = 'https://healty-plants.onrender.com/api'; // Production URL
 
 // Storage'dan token al
 const getToken = () =>
@@ -15,6 +17,8 @@ export const apiRequest = async (endpoint, options = {}, onAuthError = null) => 
 
   const headers = {
     'Content-Type': 'application/json',
+    // [MİMARİ] Header Injection (Enjeksiyon)
+    // Eğer storage'da token varsa "Bearer <token>" formatında Authorization başlığına (header) ekler. Backend'in authMiddleware'i bunu bekler.
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
@@ -26,7 +30,8 @@ export const apiRequest = async (endpoint, options = {}, onAuthError = null) => 
 
   const data = await response.json();
 
-  // 401 → oturum süresi dolmuş veya geçersiz token
+  // [MİMARİ] Hata Zinciri ve Merkezi Yönlendirme (Centralized Error Handling)
+  // Backend 401 (Unauthorized) dönerse, token süresi dolmuştur. Fonksiyon parametresi olarak gelen `onAuthError` (Context'teki handleAuthError fonksiyonu) çalıştırılır.
   if (response.status === 401 && onAuthError) {
     onAuthError();
     throw new Error(data.message || 'Oturumunuzun süresi doldu. Lütfen tekrar giriş yapın.');
@@ -45,7 +50,9 @@ export const apiDelete = (endpoint, onAuthError) =>
   apiRequest(endpoint, { method: 'DELETE' }, onAuthError);
 
 // ---------------------------------------------------------------
-// FormData ile istek (medya yükleme — Content-Type'ı browser ayarlar)
+// [MİMARİ BİLGİ] Multipart/FormData Yüklemeleri (MIME ve Boundary Ayarı)
+// Neden Content-Type boş bırakılıyor? -> Fetch API, formData'yı gönderirken sınırları (boundary) kendisi belirler. 
+// Eğer biz buraya "Content-Type: application/json" koysaydık, backend "multipart/form-data" beklediği için hata fırlatır ve dosya (resim/video) okunamazdı.
 // ---------------------------------------------------------------
 export const apiPostFormData = async (endpoint, formData, onAuthError = null) => {
   const token = getToken();
@@ -65,7 +72,8 @@ export const apiPostFormData = async (endpoint, formData, onAuthError = null) =>
     throw new Error(data.message || 'Oturumunuzun süresi doldu. Lütfen tekrar giriş yapın.');
   }
 
-  // AI kullanım sayaçlarını response header'larından oku
+  // [MİMARİ] Custom Header Extraction (HTTP Başlık Okuma)
+  // Backend'in aiLimitMiddleware'inde "res.setHeader" ile eklenen AI kullanım sayılarını, Response başlığından okuyarak UI'ın güncellenmesi için geri döneriz.
   const usageCount = response.headers.get('X-AI-Usage-Count');
   const usageLimit = response.headers.get('X-AI-Usage-Limit');
 

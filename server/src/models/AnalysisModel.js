@@ -1,7 +1,10 @@
 import mongoose from 'mongoose';
 
+// [MİMARİ BİLGİ] - AnalysisModel (Geçmişe Yönelik Uyumluluk)
+// İlk mimaride sadece tekil analizler vardı, sonradan sohbet (conversation) mantığına geçildiğinde bu model silinmedi. 
+// "Geriye dönük uyumluluk (Backward Compatibility)" sağlanması amacıyla yeni yüklemeler hem buraya hem Conversation modeline kaydedilir.
 const AnalysisSchema = new mongoose.Schema({
-  // İleriki aşamalar için kullanıcı ID'si (Opsiyonel şimdilik)
+  // [İlişki] SQL'deki Foreign Key mantığının MongoDB'deki karşılığıdır (Reference).
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

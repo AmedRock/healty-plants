@@ -24,7 +24,7 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Şifre alanı zorunludur'],
     minlength: [6, 'Şifre en az 6 karakter olmalıdır'],
-    select: false // Sorgularda otomatik gelmez, güvenlik
+    select: false // [MİMARİ BİLGİ] select: false -> Güvenlik önlemi. Veritabanından kullanıcı çekilirken password alanının kazara frontende sızmasını engeller. (Açıkça .select('+password') denmedikçe gelmez)
   },
   aiUsageCount: {
     type: Number,
@@ -32,7 +32,7 @@ const UserSchema = new mongoose.Schema({
   },
   aiUsageLimit: {
     type: Number,
-    default: 50 // Günlük limit
+    default: 50 // [BİLEŞEN] aiUsageLimit -> Sistemin sömürülmesini engellemek için kullanıcı başına günlük kota uygulanmıştır.
   },
   aiUsageResetDate: {
     type: Date,
@@ -49,19 +49,22 @@ const UserSchema = new mongoose.Schema({
   }
 });
 
-// Şifreyi kaydetmeden önce bcrypt ile hashle
-// Mongoose 9: async pre hook'larda next() yerine sadece return kullanılır
+// [MİMARİ] Mongoose Pre-Save Hook (Şifre Hashleme)
+// Kullanıcı şifresi asla düz metin (plain text) olarak saklanmaz (Güvenlik ihlali). Kaydedilmeden önce bcrypt ile 12 round hash'lenir.
+// Neden 12 round? Güvenlik/performans dengesi için ideal orandır, brute force saldırılarını inanılmaz yavaşlatır.
 UserSchema.pre('save', async function () {
   if (!this.isModified('password')) return;
   this.password = await bcrypt.hash(this.password, 12);
 });
 
-// Şifre doğrulama instance metodu
+// [MİMARİ] Instance Method - Şifre Doğrulama
+// Giriş (Login) işleminde kullanıcının girdiği düz metin şifre ile veritabanındaki hash'li şifreyi asenkron olarak karşılaştırır.
 UserSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Günlük AI kullanım limitini sıfırla (gerekiyorsa)
+// [MİMARİ] Instance Method - Günlük Limit Sıfırlama
+// Herhangi bir AI işlemi (chat/upload) yapılmadan önce bu fonksiyon tetiklenir. Zaman damgası kontrol edilir ve yeni güne girilmişse sayaç sıfırlanır.
 UserSchema.methods.checkAndResetUsage = async function () {
   const now = new Date();
   if (now >= this.aiUsageResetDate) {

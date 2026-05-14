@@ -28,7 +28,8 @@ const Sidebar = ({
   const safeToLower = (str) => (str || '').toLocaleLowerCase('tr-TR');
   const searchLower = safeToLower(searchQuery.trim());
 
-  // Filtrelenmiş sohbetler
+  // [MİMARİ] Client-Side Filtering (İstemci Tarafı Arama)
+  // Kullanıcı arama yaptığında her harfte sunucuya (Backend'e) istek atmak (SQL sorgusu çalıştırmak) yerine, halihazırda tarayıcı RAM'inde bulunan dizi üzerinde `filter()` uygulanarak O(N) hızında sonuç üretilir. (Network Optimization).
   const filtered = searchLower
     ? conversations.filter(c =>
       safeToLower(c.title).includes(searchLower) ||
@@ -36,7 +37,8 @@ const Sidebar = ({
     )
     : conversations;
 
-  // ---- Sidebar içeriği (desktop + mobil paylaşımlı) ----
+  // ---- [MİMARİ] Responsive (Duyarlı) Layout Paylaşımı ----
+  // Aynı JSX ağacı, hem masaüstü yan barında (aside) hem de mobil çekmecede (drawer/overlay) kullanılarak kod tekrarı engellenmiştir.
   const sidebarContent = (
     <div className="flex flex-col h-full">
       {/* Başlık + Yeni Sohbet */}

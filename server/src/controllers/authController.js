@@ -2,13 +2,17 @@ import User from '../models/UserModel.js';
 import jwt from 'jsonwebtoken';
 
 // JWT token oluşturucu
+// [MİMARİ] JWT Token Oluşturucu (Stateless Auth)
+// Sunucu RAM'inde oturum (session) tutmak yerine bilgiyi imzalı bir token içerisine gömüyoruz.
+// jwt.sign() ile { id } payload'ı şifrelenir ve istemciye gönderilir.
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d'
   });
 };
 
-// Kullanıcıya dönecek temiz veri
+// [MİMARİ] DTO (Data Transfer Object) Benzeri Veri Temizleyici
+// Veritabanı dokümanından (User) sadece istemcinin ihtiyacı olan alanları çıkarır. (Şifre veya gereksiz alanların sızmasını önler)
 const buildUserPayload = (user) => ({
   id: user._id,
   firstName: user.firstName,
@@ -27,22 +31,23 @@ export const register = async (req, res) => {
   try {
     const { firstName, lastName, email, password, confirmPassword } = req.body;
 
-    // Zorunlu alan kontrolü
+    // [VALIDATION] Tüm zorunlu alanların varlığı kontrol edilir
     if (!firstName || !lastName || !email || !password || !confirmPassword) {
       return res.status(400).json({ success: false, message: 'Tüm alanlar zorunludur.' });
     }
 
-    // Şifre eşleşme kontrolü
+    // [VALIDATION] İki şifrenin eşleşme kontrolü
     if (password !== confirmPassword) {
       return res.status(400).json({ success: false, message: 'Şifreler eşleşmiyor.' });
     }
 
-    // Minimum uzunluk kontrolü
+    // [VALIDATION] Güvenlik için minimum karakter sınırı
     if (password.length < 6) {
       return res.status(400).json({ success: false, message: 'Şifre en az 6 karakter olmalıdır.' });
     }
 
-    // Email benzersizlik kontrolü
+    // [MİMARİ] Email Uniqueness Check (Benzersizlik Kontrolü)
+    // Aynı email ile mükerrer kayıt açılmasını engelliyoruz. Aramaları case-insensitive (küçük harf) yapıyoruz.
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       return res.status(409).json({ success: false, message: 'Bu email adresi zaten kayıtlı.' });
@@ -82,6 +87,7 @@ export const login = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email ve şifre zorunludur.' });
     }
 
+    // [MİMARİ] Sensitive data access
     // select('+password') → password alanı select:false olduğu için açıkça çekiyoruz
     const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
 
@@ -89,7 +95,8 @@ export const login = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Email veya şifre hatalı.' });
     }
 
-    // Günlük AI kullanım resetini kontrol et
+    // [İŞ MANTIĞI] Günlük Limitlerin Yenilenmesi (Lazy Reset Pattern)
+    // Cron job (zamanlanmış görev) kullanmak yerine, kullanıcı işlem yaptığında zaman kontrolü yapıp hakları o an sıfırlıyoruz.
     await user.checkAndResetUsage();
 
     const token = signToken(user._id);

@@ -6,7 +6,8 @@ import { useAuth } from '../../context/AuthContext';
 import { apiGet } from '../../utils/api';
 
 // ---------------------------------------------------------------
-// AI Kullanım Progress Bar
+// [MİMARİ] Stateless UI Component (Durumsuz Arayüz Bileşeni)
+// UsageBar: Kendine gönderilen `used` ve `limit` props'larını okur. İçerisinde API isteği atmaz veya global state'e dokunmaz. Bu yaklaşım (Dumb Component) bileşenin tekrar kullanılabilirliğini ve test edilebilirliğini artırır.
 // ---------------------------------------------------------------
 const UsageBar = ({ used, limit }) => {
   const pct = Math.min(Math.round((used / limit) * 100), 100);
@@ -39,7 +40,7 @@ const UsageBar = ({ used, limit }) => {
 };
 
 // ---------------------------------------------------------------
-// Tarih formatlama
+// [BİLEŞEN] Utility Function (Yardımcı Metot)
 // ---------------------------------------------------------------
 const formatDate = (dateStr) => {
   if (!dateStr) return '—';
@@ -51,21 +52,23 @@ const formatDate = (dateStr) => {
 };
 
 // ---------------------------------------------------------------
-// ProfileModal
+// [MİMARİ] Profile Modal Parent Bileşeni
 // ---------------------------------------------------------------
 const ProfileModal = ({ onClose }) => {
   const { user, logout, handleAuthError } = useAuth();
   const modalRef = useRef(null);
   const [conversationCount, setConversationCount] = useState(null);
 
-  // Modal açılınca sohbet sayısını çek
+  // [MİMARİ] Component Lifecycle (componentDidMount alternatifi)
+  // Modal DOM'a basıldığı anda API'den (GET /conversations) kullanıcının toplam sohbet sayısı çekilir.
   useEffect(() => {
     apiGet('/conversations', handleAuthError)
       .then(({ data }) => { if (data.success) setConversationCount(data.total); })
       .catch(() => { });
   }, [handleAuthError]);
 
-  // Dışarıya tıklayınca kapat
+  // [MİMARİ] Memory Leak (Bellek Sızıntısı) Koruması & DOM Event Listener
+  // Tıklama (mousedown) dinleyicisi document objesine eklenir. Component unmount olduğunda (kapandığında) `removeEventListener` ile bu fonksiyon silinerek bellekte çöp birikmesi engellenir.
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) {

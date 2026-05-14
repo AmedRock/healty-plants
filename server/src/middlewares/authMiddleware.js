@@ -5,7 +5,8 @@ export const protect = async (req, res, next) => {
   try {
     let token;
 
-    // Authorization: Bearer <token> başlığını kontrol et
+    // [MİMARİ] Stateless Authentication (Durumsuz Doğrulama)
+    // Authorization başlığında (header) 'Bearer <token>' formatı kullanılarak sunucuya oturum durumu (session id) gönderilmez.
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
     }
@@ -18,10 +19,12 @@ export const protect = async (req, res, next) => {
       });
     }
 
-    // Token'ı doğrula
+    // [MİMARİ] Kriptografik İmza Doğrulaması (Signature Verification)
+    // JWT_SECRET kullanılarak token'ın bütünlüğü (tampered) ve süresi (expired) asenkron olmayan (senkron) şekilde doğrulanır.
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Kullanıcıyı veritabanından getir
+    // [BİLEŞEN] Varlık Doğrulaması (Entity Validation)
+    // Token geçerli olsa bile kullanıcının veritabanından silinmiş olma ihtimaline karşı ek güvenlik kontrolü.
     const user = await User.findById(decoded.id);
     if (!user) {
       return res.status(401).json({
@@ -31,7 +34,8 @@ export const protect = async (req, res, next) => {
       });
     }
 
-    // req.user'a ekle → sonraki middleware'ler kullanabilir
+    // [MİMARİ] Request Context Payload (Bağlam Enjeksiyonu)
+    // Doğrulanan kullanıcı nesnesi `req.user` içine gömülerek kendisinden sonraki Controller'ların (örn. chatController) bu kullanıcıya doğrudan erişmesi sağlanır.
     req.user = user;
     next();
 

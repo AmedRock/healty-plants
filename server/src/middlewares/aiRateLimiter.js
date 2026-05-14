@@ -1,7 +1,7 @@
 import rateLimit from 'express-rate-limit';
 
 export const aiRateLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 Saat
+  windowMs: 60 * 60 * 1000, // [MİMARİ BİLGİ] Zaman penceresi: 1 Saatte en fazla 15 analiz isteği (Makul Sınır)
   max: 15, // Saatte en fazla 15 analiz isteği (Makul Sınır)
   message: {
     success: false,

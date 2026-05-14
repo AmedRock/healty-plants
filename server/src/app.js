@@ -8,36 +8,41 @@ import conversationRoutes from './routes/conversationRoutes.js';
 
 const app = express();
 
-// Güvenlik Middleware'i
+// [MİMARİ BİLGİ] - Güvenlik Middleware'i (Helmet)
+// HTTP başlıklarını (headers) otomatik ayarlayarak bilinen birçok web zafiyetine (XSS, Clickjacking vb.) karşı koruma sağlar.
 app.use(helmet());
 
-// CORS Ayarları (Frontend uygulamasına izin veriyoruz)
+// [MİMARİ BİLGİ] - CORS (Cross-Origin Resource Sharing)
+// Uygulamanın frontend ve backend'i farklı portlarda çalıştığı için CORS politikalarını ayarlıyoruz.
+// origin -> Sadece izin verilen URL'den gelen isteklere yanıt verilir.
+// credentials -> Cookie ve Authorization başlıklarının iletilmesine izin verir.
+// exposedHeaders -> Client'ın response header'larındaki AI limit sayaçlarını okuyabilmesini sağlar.
 app.use(cors({
-  origin: 'http://localhost:5173', // Vite varsayılan portu
+  origin: 'http://localhost:5173',
   credentials: true,
-  exposedHeaders: ['X-AI-Usage-Count', 'X-AI-Usage-Limit'] // AI limit header'larını frontend'e aç
+  exposedHeaders: ['X-AI-Usage-Count', 'X-AI-Usage-Limit']
 }));
 
 // Body parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Temel Test Rotası
+// [BİLEŞEN] - Health Check (Sağlık Kontrolü) Rotası
+// Sunucunun ve API'nin erişilebilir olup olmadığını doğrulamak için kullanılır.
 app.get('/api/test', (req, res) => {
   res.json({ success: true, message: 'Backend API sorunsuz çalışıyor!' });
 });
 
-// Kimlik Doğrulama Rotaları
+// [MİMARİ] - Kimlik Doğrulama Rotaları
 app.use('/api/auth', authRoutes);
 
-// Yükleme (Upload) Rotaları
+// [BİLEŞEN] - Dosya (resim/video) yükleme işlemleri rotaları
 app.use('/api/upload', uploadRoutes);
 
-// Metin Chat Rotaları
+// [BİLEŞEN] - Metin Chat Rotaları
 app.use('/api/chat', chatRoutes);
 
-// Sohbet Geçmişi Rotaları
+// [BİLEŞEN] - Sohbet (Conversation) veritabanı CRUD rotaları
 app.use('/api/conversations', conversationRoutes);
 
 export default app;
-

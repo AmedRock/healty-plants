@@ -4,11 +4,13 @@ import { protect } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-// Açık endpoint'ler (token gerektirmez)
+// [MİMARİ] Public Endpoints (Açık Rotalar)
+// JWT Token gerektirmeyen (authorization middlewaresi olmayan) authentication entry point'leri.
 router.post('/register', register);
 router.post('/login', login);
 
-// Korumalı endpoint (geçerli token gerektirir)
+// [MİMARİ] Protected Endpoints (Korumalı Rotalar)
+// Client'ın gönderdiği JWT'yi `protect` middleware'i ile filtreleyip geçerliyse `getMe` controller'ına aktaran rota.
 router.get('/me', protect, getMe);
 
 export default router;
